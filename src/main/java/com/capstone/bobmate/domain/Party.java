@@ -69,4 +69,10 @@ public class Party {
         this.currentCount = party.getMembers().size();
     }
 
+    // 파티 정보 수정
+    public void updateParty(String title, int maximumCount){
+        this.title = title;
+        this.maximumCount = maximumCount;
+    }
+
 }
