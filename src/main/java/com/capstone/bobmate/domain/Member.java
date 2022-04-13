@@ -52,16 +52,20 @@ public class Member {
     @JoinColumn(name = "party_id")
     private Party party;        // 한 파티에는 여러명이 들어갈 수 있음
 
+
     // 방장 여부 변경
     public void updateOwner(Boolean owner){
         this.owner = owner;
     }
 
-    // 파티 참가 시 가입한 파티, 참가 여부 변경
-    public static Member joinParty(Member member, Party party, Boolean joined){
-        member.party = party;
-        member.isJoined = joined;
-        return member;
+    // 참가 여부 변경
+    public void setJoined(Boolean joined){
+        this.isJoined = joined;
+    }
+
+    // 파티 참가
+    public void setParty(Party party){
+        this.party = party;
     }
 
 

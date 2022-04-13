@@ -20,7 +20,7 @@ public class RestaurantController {
 
     private final RestaurantService restaurantService;
 
-    // 식당 목록 리턴
+    // 식당 목록 조회
     @GetMapping("/restaurants")
     public ResponseEntity<?> restaurantsList(){
         try{

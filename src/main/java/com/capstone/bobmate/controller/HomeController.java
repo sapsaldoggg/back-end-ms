@@ -25,7 +25,7 @@ public class HomeController {
     private final MemberRepository memberRepository;
 
     // 회원 가입
-    @PostMapping("/signup")
+    @PostMapping("/join")
     public ResponseEntity<?> registerUser(@RequestBody JoinMemberDto joinDto){
         try{
 //            if (joinDto == null || joinDto.getLoginId().equals(null)){
@@ -44,11 +44,22 @@ public class HomeController {
     }
 
     // 회원가입 때 아이디 중복 검사
-    @PostMapping("/idDuplicate")
+    @PostMapping("/duplicate-loginId")
     public ResponseEntity<?> duplicateId(@RequestBody JoinMemberDto joinDto) {
 
         if (memberRepository.existsByLoginId(joinDto.getLoginId())) {
             log.warn("Id already exists {}", joinDto.getLoginId());
+            return new ResponseEntity<>(true, HttpStatus.BAD_REQUEST);
+        } else
+            return new ResponseEntity<>(false, HttpStatus.OK);
+    }
+
+    // 회원가입 때 닉네임 중복 검사
+    @PostMapping("/duplicate-nickname")
+    public ResponseEntity<?> duplicateNickName(@RequestBody JoinMemberDto joinDto) {
+
+        if (memberRepository.existsByNickname(joinDto.getNickname())) {
+            log.warn("Nickname already exists {}", joinDto.getNickname());
             return new ResponseEntity<>(true, HttpStatus.BAD_REQUEST);
         } else
             return new ResponseEntity<>(false, HttpStatus.OK);

@@ -43,15 +43,24 @@ public class Party {
     //== 생성 메서드 ==//
     public static Party create(Member member, Restaurant restaurant, String title, int maximumCount){
         Party party = new Party();
-        party.members.add(member);
+        party.addMember(member);
         party.setRestaurant(restaurant);
         party.setTitle(title);
         party.setMaximumCount(maximumCount);
         party.setStatus(MatchingStatus.NON_MATCHED);
         party.setCreatedAt(LocalDateTime.now());
-        party.currentCount = party.getMembers().size();
+        party.setCurrentCount(party);
+        member.updateOwner(true);   // 생성 멤버를 방장으로 변경
 
         return party;
+    }
+
+    // 파티 참가  (인원 증가, 참가 여부 - true)
+    public void addMember(Member member){
+        this.members.add(member);
+        member.setParty(this);
+        member.setJoined(true);
+        this.setCurrentCount(this);
     }
 
 

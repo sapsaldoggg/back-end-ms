@@ -5,6 +5,7 @@ import com.capstone.bobmate.domain.Member;
 import com.capstone.bobmate.domain.Party;
 import com.capstone.bobmate.domain.Restaurant;
 import com.capstone.bobmate.dto.partyDto.CreatePartyDto;
+import com.capstone.bobmate.dto.partyDto.PartyOwnerDto;
 import com.capstone.bobmate.dto.partyDto.ResponsePartyDto;
 import com.capstone.bobmate.dto.partyDto.ResponsePartyMembersDto;
 import com.capstone.bobmate.repository.PartyRepository;
@@ -19,6 +20,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -58,12 +60,23 @@ public class PartyController {
     }
 
 
-    // 파티 리스트 보기
+    // 식당 선택 시 파티 목록 조회
     @GetMapping("/{restaurant_id}/parties")
-    public ResponseEntity<?> showParties(@PathVariable(name = "restaurant_id") Long restaurantId){
+    public ResponseEntity<?> showParties(@PathVariable(name = "restaurant_id") Long restaurantId, @AuthenticationPrincipal PrincipalDetails principalDetails){
         try{
+            // 방장 여부 확인을 위해 멤버 조회
+            Member member = principalDetails.getMember();
+            log.info("현재 로그인 한 사용자: {}", member.getNickname());
+
+            // 식당 id로 찾은 파티 목록
             List<ResponsePartyDto> partyDtos = partyService.parties(restaurantId);
-            return new ResponseEntity<>(partyDtos, HttpStatus.OK);
+
+            // 사용자가 방장일 때
+            if (member.getOwner()){
+                Party membersParty = member.getParty();
+                return new ResponseEntity<>(new PartyOwnerDto(membersParty.getId(), partyDtos), HttpStatus.OK);
+            }
+            return new ResponseEntity<>(new PartyOwnerDto(partyDtos), HttpStatus.OK);
 
         } catch (Exception e){
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
@@ -71,8 +84,8 @@ public class PartyController {
     }
 
 
-    // 파티 참가하기
-    @PostMapping("/party/join/{party_id}")
+    // 파티 참가
+    @PostMapping("/party/{party_id}")
     public ResponseEntity<?> memberJoinParty(@AuthenticationPrincipal PrincipalDetails principalDetails,
                                        @PathVariable(name = "party_id") Long partyId){
         try{
@@ -87,22 +100,15 @@ public class PartyController {
             } else if(member.getIsJoined().equals(true)){   // 사용자가 파티에 이미 속해있음
                 return new ResponseEntity<>("already joined", HttpStatus.BAD_REQUEST);
             }
-
             List<ResponsePartyMembersDto> responsePartyMembersDtos = partyService.joinParty(member, party);
 
-
             return new ResponseEntity<>(responsePartyMembersDtos, HttpStatus.OK);
-
 
         } catch (Exception e){
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
 
 
-        // 1. 파티를 찾고
-        // 2. 파티에 member 를 추가해주고 (member 테이블의 party_id 에 값이 들어가야 함)
-        // 3. 파티를 저장하고
-        // 4. 파티에 있는 members 리스트 정보를 모두 리턴
     }
 
 
