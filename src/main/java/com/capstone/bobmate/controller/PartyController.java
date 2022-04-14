@@ -6,7 +6,6 @@ import com.capstone.bobmate.domain.Party;
 import com.capstone.bobmate.domain.Restaurant;
 import com.capstone.bobmate.dto.partyDto.RequestPartyDto;
 import com.capstone.bobmate.dto.partyDto.PartyOwnerDto;
-import com.capstone.bobmate.dto.partyDto.ResponsePartyDto;
 import com.capstone.bobmate.dto.partyDto.ResponsePartyMembersDto;
 import com.capstone.bobmate.repository.PartyRepository;
 import com.capstone.bobmate.repository.RestaurantRepository;
@@ -47,12 +46,13 @@ public class PartyController {
             Member member = principalDetails.getMember();
             Restaurant restaurant = restaurantRepository.findById(restaurantId).orElseGet(null);
 
-            if (member.getIsJoined() == true){  // 파티에 이미 소속되어 있으면 파티 생성 불가
-                return new ResponseEntity<>("already joined", HttpStatus.BAD_REQUEST);
-            }
+            Boolean create = partyService.create(member, restaurant, partyDto);
 
-            partyService.create(member, restaurant, partyDto);
-            return new ResponseEntity<>(true, HttpStatus.OK);
+            if (create){    // 정상적으로 생성
+                return new ResponseEntity<>(true, HttpStatus.OK);
+            } else {    // 비정상적으로 생성
+                return new ResponseEntity<>(false, HttpStatus.OK);
+            }
 
         } catch (Exception e){
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
@@ -72,14 +72,9 @@ public class PartyController {
             log.info("현재 로그인 한 사용자: {}", member.getNickname());
 
             // 식당 id로 찾은 파티 목록
-            List<ResponsePartyDto> partyDtos = partyService.parties(restaurantId);
+            PartyOwnerDto partyOwnerDto = partyService.parties(restaurantId, member);
 
-            // 사용자가 방장일 때
-            if (member.getOwner()){
-                Party membersParty = member.getParty();
-                return new ResponseEntity<>(new PartyOwnerDto(membersParty.getId(), partyDtos), HttpStatus.OK);
-            }
-            return new ResponseEntity<>(new PartyOwnerDto(partyDtos), HttpStatus.OK);
+            return new ResponseEntity<>(partyOwnerDto, HttpStatus.OK);
 
         } catch (Exception e){
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
@@ -98,7 +93,6 @@ public class PartyController {
             log.info("현재 로그인 한 사용자: {}", member.getNickname());
 
             Party party = partyRepository.findById(partyId).orElseGet(null);
-            log.info("찾은 파티: {}", party);
 
             if (party.getCurrentCount() == party.getMaximumCount()){    // 파티가 가득 차 있음
                 return new ResponseEntity<>("full", HttpStatus.BAD_REQUEST);
@@ -136,6 +130,31 @@ public class PartyController {
         } catch (Exception e){
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
+    }
+
+
+    // 파티 탈퇴
+    @PostMapping("/party/{party_id}/out")
+    public ResponseEntity<?> partyOut(
+            @PathVariable(name = "party_id") Long partyId,
+            @AuthenticationPrincipal PrincipalDetails principalDetails) {
+
+        try{
+            Member member = principalDetails.getMember();
+            log.info("현재 로그인 한 사용자: {}", member.getNickname());
+
+            Boolean quit = partyService.leaveParty(member, partyId);
+
+            if (quit){ // 탈퇴가 잘 수행됨
+                return new ResponseEntity<>(true, HttpStatus.OK);
+            } else {    // 탈퇴에 문제 발생
+                return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
+            }
+
+        } catch (Exception e){
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+
     }
 
 

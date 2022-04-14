@@ -63,7 +63,7 @@ public class Member {
         this.isJoined = joined;
     }
 
-    // 파티 참가
+    // 파티 참가 여부 변경
     public void setParty(Party party){
         this.party = party;
     }

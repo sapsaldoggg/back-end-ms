@@ -75,4 +75,14 @@ public class Party {
         this.maximumCount = maximumCount;
     }
 
+    // 파티 탈퇴 (인원 감소)
+    public void minusMember(Member member){
+        log.info("삭제 여부: {}", this.members.remove(member));
+        this.members.remove(member);
+        member.setParty(null);
+        member.setJoined(false);
+        this.setCurrentCount(this);
+    }
+
+
 }
