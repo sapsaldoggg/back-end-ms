@@ -143,7 +143,6 @@ public class PartyService {
     // 파티 탈퇴
     @Transactional
     public Boolean leaveParty(Member member, Long partyId){
-
         // 현재 사용자
         Member findMember = memberRepository.findById(member.getId()).orElseGet(null);
 
@@ -154,13 +153,10 @@ public class PartyService {
 
         // 요청받은 partyId로 찾은 파티
         Party findParty = partyRepository.findById(partyId).orElseGet(null);
-
         log.info("요청 받은 party 와 member 가 속한 party 동일 여부: {}", findMember.getParty().getId() == findParty.getId());
-
 
         // member 의 partyId와 요청받은 party_id 가 같은지 확인
         if (findMember.getParty().getId() == findParty.getId()){
-
             // 사용자가 방장일 때 나가면 파티 삭제
             if (findMember.getOwner()){
                 findMember.updateOwner(false);  // 방장 박탈
@@ -173,19 +169,54 @@ public class PartyService {
                     log.info("참가 멤버들: {}", eachMember.getNickname());
                     findParty.minusMember(eachMember);
                 }
-
                 memberRepository.save(findMember);
                 partyRepository.deleteById(findParty.getId());
 
             } else {
                 findParty.minusMember(findMember);
-
                 memberRepository.save(findMember);
             }
             return true;
         }
         // 가입되어 있는 파티가 아닌 다른 파티 탈퇴를 요청했을 때
         return false;
+    }
+
+
+    // 파티 삭제
+    public Boolean deleteParty(Member member, Long partyId){
+        // 현재 사용자
+        Member findMember = memberRepository.findById(member.getId()).orElseGet(null);
+
+        // 사용자가 파티에 가입되어 있는지 확인
+        if (findMember.getParty() == null){
+            return false;
+        }
+
+        // 요청받은 partyId로 찾은 파티
+        Party findParty = partyRepository.findById(partyId).orElseGet(null);
+        log.info("요청 받은 party 와 member 가 속한 party 동일 여부: {}", findMember.getParty().getId() == findParty.getId());
+
+        // member 의 partyId와 요청받은 party_id 가 같은지 && 사용자가 방장인지 확인
+        if (findMember.getOwner() && (findMember.getParty().getId() == findParty.getId())){
+            findMember.updateOwner(false);  // 방장 박탈
+            log.info("방장 여부: {}", findMember.getOwner());
+
+            // 참가한 유저들 강제로 파티 탈퇴
+            List<Member> members = memberRepository.findByPartyId(findParty.getId());
+
+            for (Member eachMember : members){
+                log.info("파티 탈퇴될 멤버들: {}", eachMember.getNickname());
+                findParty.minusMember(eachMember);
+            }
+            memberRepository.save(findMember);
+            partyRepository.deleteById(findParty.getId());
+
+            return true;
+        }
+        // 가입되어 있는 파티가 아닌 다른 파티 탈퇴를 요청했을 때
+        return false;
+
     }
 
 

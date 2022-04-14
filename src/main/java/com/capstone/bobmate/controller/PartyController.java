@@ -158,4 +158,28 @@ public class PartyController {
     }
 
 
+    // 파티 삭제
+    @DeleteMapping("/party/{party_id}")
+    public ResponseEntity<?> partyDelete(
+            @PathVariable(name = "party_id") Long partyId,
+            @AuthenticationPrincipal PrincipalDetails principalDetails) {
+
+        try {
+            Member member = principalDetails.getMember();
+            log.info("현재 로그인 한 사용자: {}", member.getNickname());
+
+            Boolean delete = partyService.deleteParty(member, partyId);
+
+            if (delete) {   // 삭제가 잘 수행됨
+                return new ResponseEntity<>(true, HttpStatus.OK);
+            } else {    // 삭제에 문제 발생
+                return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
+            }
+
+        } catch (Exception e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+
 }
