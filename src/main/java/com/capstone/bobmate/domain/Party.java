@@ -81,7 +81,13 @@ public class Party {
         this.members.remove(member);
         member.setParty(null);
         member.setJoined(false);
+        member.setReady(false);
         this.setCurrentCount(this);
+    }
+
+    // 파티 매칭 상태 변경
+    public void updateStatus(MatchingStatus status){
+        this.status = status;
     }
 
 

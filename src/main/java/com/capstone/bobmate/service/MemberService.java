@@ -35,6 +35,7 @@ public class MemberService {
                 .reliability(0L)
                 .owner(false)
                 .isJoined(false)
+                .isReady(false)
                 .role(RoleType.ROLE_USER)
                 .build();
 

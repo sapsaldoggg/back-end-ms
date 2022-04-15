@@ -92,14 +92,11 @@ public class PartyController {
             Member member = principalDetails.getMember();
             log.info("현재 로그인 한 사용자: {}", member.getNickname());
 
-            Party party = partyRepository.findById(partyId).orElseGet(null);
+            List<ResponsePartyMembersDto> responsePartyMembersDtos = partyService.joinParty(member, partyId);
 
-            if (party.getCurrentCount() == party.getMaximumCount()){    // 파티가 가득 차 있음
-                return new ResponseEntity<>("full", HttpStatus.BAD_REQUEST);
-            } else if(member.getIsJoined().equals(true)){   // 사용자가 파티에 이미 속해있음
-                return new ResponseEntity<>("already joined", HttpStatus.BAD_REQUEST);
+            if (responsePartyMembersDtos == null){  // 파티 참가에 문제가 발생
+                return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
             }
-            List<ResponsePartyMembersDto> responsePartyMembersDtos = partyService.joinParty(member, party);
 
             return new ResponseEntity<>(responsePartyMembersDtos, HttpStatus.OK);
 
@@ -179,6 +176,34 @@ public class PartyController {
         } catch (Exception e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
+    }
+
+
+    // 준비 or 시작 버튼 클릭
+    @PostMapping("/party/{party_id}/ready")
+    public ResponseEntity<?> partyReady(
+            @PathVariable(name = "party_id") Long partyId,
+            @AuthenticationPrincipal PrincipalDetails principalDetails) {
+
+        try{
+            Member member = principalDetails.getMember();
+            log.info("현재 로그인 한 사용자: {}", member.getNickname());
+
+            int ready = partyService.readyParty(member, partyId);
+
+            if (ready == 0) {    // 준비 or 시작이 잘 눌림
+                return new ResponseEntity<>(true, HttpStatus.OK);
+            } else if (ready == 1){ // 모든 파티원이 ready 상태가 아닌데 방장이 start 한 경우
+                return new ResponseEntity<>(false, HttpStatus.OK);
+            } else {    // 준비 or 시작에 문제 발생
+                return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
+            }
+
+        } catch (Exception e){
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+
+
     }
 
 

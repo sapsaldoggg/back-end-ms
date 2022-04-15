@@ -42,6 +42,8 @@ public class Member {
 
     private Boolean isJoined;   // 이미 다른 파티에 속해있는지 여부
 
+    private Boolean isReady;    // 준비 및 시작 여부
+
     @Enumerated(EnumType.STRING)
     private RoleType role;
 
@@ -68,5 +70,9 @@ public class Member {
         this.party = party;
     }
 
+    // 준비 or 시작 상태 변경
+    public void setReady(Boolean ready){
+        this.isReady = ready;
+    }
 
 }

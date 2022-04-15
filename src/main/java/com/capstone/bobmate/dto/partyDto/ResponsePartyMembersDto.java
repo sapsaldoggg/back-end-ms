@@ -14,5 +14,6 @@ public class ResponsePartyMembersDto {
     private Sex sex;
     private Long reliability;
     private Boolean owner;
+    private Boolean ready;
 
 }
