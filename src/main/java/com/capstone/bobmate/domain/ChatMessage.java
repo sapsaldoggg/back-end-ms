@@ -18,7 +18,9 @@ public class ChatMessage {
     @JoinColumn(name = "party_id")
     private Party party;      // 전송할 파티 방
 
-    private String sender;      // 전송자
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "member_id")
+    private String member;      // 전송자
 
     private String message;     // 전송 메시지
 

@@ -10,7 +10,7 @@ spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/bobmate?serverTimezone=Asia/Seoul
-    username: yms
+    username: root
     password: root
 
   jpa:
