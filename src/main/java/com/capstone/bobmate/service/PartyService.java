@@ -4,12 +4,10 @@ import com.capstone.bobmate.domain.MatchingStatus;
 import com.capstone.bobmate.domain.Member;
 import com.capstone.bobmate.domain.Party;
 import com.capstone.bobmate.domain.Restaurant;
-import com.capstone.bobmate.dto.partyDto.PartyOwnerDto;
-import com.capstone.bobmate.dto.partyDto.RequestPartyDto;
-import com.capstone.bobmate.dto.partyDto.ResponsePartyDto;
-import com.capstone.bobmate.dto.partyDto.ResponsePartyMembersDto;
+import com.capstone.bobmate.dto.partyDto.*;
 import com.capstone.bobmate.repository.MemberRepository;
 import com.capstone.bobmate.repository.PartyRepository;
+import com.capstone.bobmate.repository.RestaurantRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +30,8 @@ public class PartyService {
     @Autowired
     private final PartyRepository partyRepository;
 
+    @Autowired
+    private final RestaurantRepository restaurantRepository;
 
     // 파티 생성
     @Transactional
@@ -89,7 +89,7 @@ public class PartyService {
 
     // 파티 참가
     @Transactional
-    public List<ResponsePartyMembersDto> joinParty(Member member, Long partyId){
+    public PartyInfoDto joinParty(Member member, Long partyId){
         // 현재 사용자
         Member findMember = memberRepository.findById(member.getId()).orElseGet(null);
 
@@ -120,7 +120,11 @@ public class PartyService {
             );
         }
 
-        return responsePartyMembersDtos;
+        Restaurant findRestaurant = findParty.getRestaurant();
+        log.info("파티로 찾은 식당", findRestaurant);
+
+        return new PartyInfoDto(findParty.getTitle(), findParty.getCurrentCount(), findParty.getMaximumCount(), findParty.getStatus(), findRestaurant.getName(), responsePartyMembersDtos);
+//        return responsePartyMembersDtos;
     }
 
 

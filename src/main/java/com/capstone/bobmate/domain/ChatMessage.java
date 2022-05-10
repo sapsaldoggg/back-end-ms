@@ -20,7 +20,7 @@ public class ChatMessage {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id")
-    private String member;      // 전송자
+    private Member member;      // 전송자
 
     private String message;     // 전송 메시지
 

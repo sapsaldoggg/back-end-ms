@@ -47,7 +47,7 @@ public class Member {
     @Enumerated(EnumType.STRING)
     private RoleType role;
 
-    @OneToMany(mappedBy = "sender")
+    @OneToMany(mappedBy = "member")
     private List<ChatMessage> chatMessages = new ArrayList<>();    // 한 유저는 여러 채팅 메시지를 칠 수 있음
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)

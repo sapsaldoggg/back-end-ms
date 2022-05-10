@@ -4,6 +4,7 @@ import com.capstone.bobmate.config.auth.PrincipalDetails;
 import com.capstone.bobmate.domain.Member;
 import com.capstone.bobmate.domain.Party;
 import com.capstone.bobmate.domain.Restaurant;
+import com.capstone.bobmate.dto.partyDto.PartyInfoDto;
 import com.capstone.bobmate.dto.partyDto.RequestPartyDto;
 import com.capstone.bobmate.dto.partyDto.PartyOwnerDto;
 import com.capstone.bobmate.dto.partyDto.ResponsePartyMembersDto;
@@ -92,13 +93,14 @@ public class PartyController {
             Member member = principalDetails.getMember();
             log.info("현재 로그인 한 사용자: {}", member.getNickname());
 
-            List<ResponsePartyMembersDto> responsePartyMembersDtos = partyService.joinParty(member, partyId);
+            PartyInfoDto partyInfoDto = partyService.joinParty(member, partyId);
+//            List<ResponsePartyMembersDto> responsePartyMembersDtos = partyService.joinParty(member, partyId);
 
-            if (responsePartyMembersDtos == null){  // 파티 참가에 문제가 발생
+            if (partyInfoDto.getResponsePartyMembersDtoList() == null){  // 파티 참가에 문제가 발생
                 return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
             }
 
-            return new ResponseEntity<>(responsePartyMembersDtos, HttpStatus.OK);
+            return new ResponseEntity<>(partyInfoDto, HttpStatus.OK);
 
         } catch (Exception e){
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
