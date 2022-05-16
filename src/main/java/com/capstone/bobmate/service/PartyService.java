@@ -11,8 +11,6 @@ import com.capstone.bobmate.repository.RestaurantRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -97,9 +95,8 @@ public class PartyService {
         Party findParty = partyRepository.findById(partyId).orElseGet(null);
 
         // 파티가 가득 차있거나 || 사용자가 이미 파티에 속해있거나 || 파티 상태가 이미 MATCHED 일 때
-        if ((findParty.getCurrentCount() == findParty.getMaximumCount()) || findMember.getIsJoined() || findParty.getStatus().equals(MatchingStatus.MATCHED)){
+        if ((findParty.getCurrentCount() == findParty.getMaximumCount()) || findMember.getIsJoined() || findParty.getStatus().equals(MatchingStatus.MATCHED))
             return null;
-        }
 
         findParty.addMember(findMember);
         memberRepository.save(findMember);  // 멤버상태 업데이트
@@ -124,38 +121,29 @@ public class PartyService {
         log.info("파티로 찾은 식당", findRestaurant);
 
         return new PartyInfoDto(findParty.getTitle(), findParty.getCurrentCount(), findParty.getMaximumCount(), findParty.getStatus(), findRestaurant.getName(), responsePartyMembersDtos);
-//        return responsePartyMembersDtos;
     }
 
 
     // 파티 수정
     @Transactional
     public Boolean updateParty(Member member, Long partyId, RequestPartyDto requestPartyDto){
-
         // 현재 사용자
         Member findMember = memberRepository.findById(member.getId()).orElseGet(null);
 
         // 요청받은 partyId로 찾은 파티
         Party findParty = partyRepository.findById(partyId).orElseGet(null);
 
-        log.info("방장 여부: {}", findMember.getOwner());
-        log.info("요청 받은 party 와 member 가 속한 party 동일 여부: {}", findMember.getParty().getId() == findParty.getId());
-
         // 현재 파티에 속한 인원이 변경하려는 최대 인원수 보다 많은 경우 변경 실패
-        if (findParty.getCurrentCount() > requestPartyDto.getMaximumCount()){
+        if (findParty.getCurrentCount() > requestPartyDto.getMaximumCount())
             return false;
-        }
 
-        // 사용자가 방장이고 && 자기 파티 수정을 요청했을 때
-        if (findMember.getOwner() && (findMember.getParty().getId() == findParty.getId())){
+        // 사용자가 방장인 경우
+        if (findMember.getOwner()){
             findParty.updateParty(requestPartyDto.getTitle(), requestPartyDto.getMaximumCount());
-            partyRepository.save(findParty);
-
             return true;
         }
-        // 방장이 아니거나 방장이지만 다른 파티 수정을 요청했을 때
+        // 이외의 경우
         return false;
-
     }
 
 
@@ -165,61 +153,54 @@ public class PartyService {
         // 현재 사용자
         Member findMember = memberRepository.findById(member.getId()).orElseGet(null);
 
-        // 사용자가 파티에 가입되어 있는지 확인
-        if (findMember.getParty() == null){
+        // 사용자가 파티에 가입되어 있지 않은 경우
+        if (findMember.getParty() == null)
             return false;
-        }
 
         // 요청받은 partyId로 찾은 파티
         Party findParty = partyRepository.findById(partyId).orElseGet(null);
-        log.info("요청 받은 party 와 member 가 속한 party 동일 여부: {}", findMember.getParty().getId() == findParty.getId());
 
-        // member 의 partyId와 요청받은 party_id 가 같은지 확인
-        if (findMember.getParty().getId() == findParty.getId()){
-            // 사용자가 방장일 때 나가면 파티 삭제
-            if (findMember.getOwner()){
-                findMember.updateOwner(false);  // 방장 박탈
-                log.info("방장 여부: {}", findMember.getOwner());
+        // 사용자가 방장일 때 나가면 파티 삭제
+        if (findMember.getOwner()){
+            findMember.updateOwner(false);  // 방장 박탈
+            log.info("방장 박탈되었는지 여부: {}", findMember.getOwner());
 
-                // 참가한 유저들 강제로 파티 탈퇴
-                List<Member> members = memberRepository.findByPartyId(findParty.getId());
+            // 참가한 유저들 강제로 파티 탈퇴
+            List<Member> members = memberRepository.findByPartyId(findParty.getId());
 
-                for (Member eachMember : members){
-                    log.info("참가 멤버들: {}", eachMember.getNickname());
-                    findParty.minusMember(eachMember);
-                }
-                memberRepository.save(findMember);
-                partyRepository.deleteById(findParty.getId());
-
-            } else {
-                findParty.minusMember(findMember);
-                memberRepository.save(findMember);
+            for (Member eachMember : members){
+                log.info("탈퇴될 멤버들: {}", eachMember.getNickname());
+                findParty.minusMember(eachMember);
             }
+            partyRepository.deleteById(findParty.getId());
+
+            return true;
+        } else if (!findMember.getOwner()) {    // 사용자가 파티원일 때
+            findParty.minusMember(findMember);
             return true;
         }
-        // 가입되어 있는 파티가 아닌 다른 파티 탈퇴를 요청했을 때
-        return false;
+        // 이외의 경우
+        return true;
     }
 
 
     // 파티 삭제
+    @Transactional
     public Boolean deleteParty(Member member, Long partyId){
         // 현재 사용자
         Member findMember = memberRepository.findById(member.getId()).orElseGet(null);
 
-        // 사용자가 파티에 가입되어 있는지 확인
-        if (findMember.getParty() == null){
+        // 사용자가 파티에 가입되어 있지 않은 경우
+        if (findMember.getParty() == null)
             return false;
-        }
 
         // 요청받은 partyId로 찾은 파티
         Party findParty = partyRepository.findById(partyId).orElseGet(null);
-        log.info("요청 받은 party 와 member 가 속한 party 동일 여부: {}", findMember.getParty().getId() == findParty.getId());
 
-        // 사용자가 방장인지 && member 의 partyId와 요청받은 party_id 가 같은지 확인
-        if (findMember.getOwner() && (findMember.getParty().getId() == findParty.getId())){
+        // 사용자가 방장인 경우
+        if (findMember.getOwner()){
             findMember.updateOwner(false);  // 방장 박탈
-            log.info("방장 여부: {}", findMember.getOwner());
+            log.info("방장 박탈되었는지 여부: {}", findMember.getOwner());
 
             // 참가한 유저들 강제로 파티 탈퇴
             List<Member> members = memberRepository.findByPartyId(findParty.getId());
@@ -228,33 +209,30 @@ public class PartyService {
                 log.info("파티 탈퇴될 멤버들: {}", eachMember.getNickname());
                 findParty.minusMember(eachMember);
             }
-            memberRepository.save(findMember);
             partyRepository.deleteById(findParty.getId());
 
             return true;
         }
-        // 가입되어 있는 파티가 아닌 다른 파티 탈퇴를 요청했을 때
+        // 이외의 경우
         return false;
     }
 
 
-    @Transactional
     // 파티 준비 or 시작
+    @Transactional
     public boolean readyParty(Member member, Long partyId){
         // 현재 사용자
         Member findMember = memberRepository.findById(member.getId()).orElseGet(null);
 
         // 요청받은 partyId로 찾은 파티
         Party findParty = partyRepository.findById(partyId).orElseGet(null);
-        log.info("요청 받은 party 와 member 가 속한 party 동일 여부: {}", findMember.getParty().getId() == findParty.getId());
 
         // 파티원들
         List<Member> members = memberRepository.findByPartyId(findParty.getId());
 
-
         // 방장 혼자 매치 시작 불가
         if (findMember.getOwner() && findParty.getCurrentCount() > 1) { // 방장인 경우 (방장이면 start 버튼)
-            if (findMember.getIsReady()) { // 매칭 상태에서 방장이 start 누르면 NON_MATCHED 로 상태 변경
+            if (findMember.getIsReady()) { // MATCHED 상태에서 방장이 start 누르면 NON_MATCHED 로 상태 변경
                 findMember.setReady(false);
                 findParty.updateStatus(MatchingStatus.NON_MATCHED);
                 log.info("매치가 취소되었습니다.");
