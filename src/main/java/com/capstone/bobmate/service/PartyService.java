@@ -159,7 +159,7 @@ public class PartyService {
     }
 
 
-    // 파티 탈퇴
+    // 파티 탈퇴 - MATCHED 상태에서 나가는 거 생각해야 함
     @Transactional
     public Boolean leaveParty(Member member, Long partyId){
         // 현재 사용자
@@ -238,8 +238,9 @@ public class PartyService {
     }
 
 
-    // 파티 준비 or 시작  - 이후 코드 변경
-    public int readyParty(Member member, Long partyId){
+    @Transactional
+    // 파티 준비 or 시작
+    public boolean readyParty(Member member, Long partyId){
         // 현재 사용자
         Member findMember = memberRepository.findById(member.getId()).orElseGet(null);
 
@@ -250,45 +251,38 @@ public class PartyService {
         // 파티원들
         List<Member> members = memberRepository.findByPartyId(findParty.getId());
 
-        // 사용자가 파티에 가입되어 있는지 확인
-        if (findMember.getParty() == null){
-            return 2;
-        }
 
-        if (findParty.getCurrentCount() == 1){  // 파티원이 방장밖에 없을 때 start 불가
-            return 1;
-        }
-
-        // member 의 partyId와 요청받은 party_id 가 같은지 && 사용자가 방장인지 확인 (방장이면 start 버튼)
-        if ((findMember.getParty().getId() == findParty.getId() && findMember.getOwner())){
-            // 매칭 상태에서 방장이 start 다시 누르면 NON_MATCHED 로 상태 변경
-            if (findParty.getStatus().equals(MatchingStatus.MATCHED)){
-                findParty.updateStatus(MatchingStatus.NON_MATCHED);
+        // 방장 혼자 매치 시작 불가
+        if (findMember.getOwner() && findParty.getCurrentCount() > 1) { // 방장인 경우 (방장이면 start 버튼)
+            if (findMember.getIsReady()) { // 매칭 상태에서 방장이 start 누르면 NON_MATCHED 로 상태 변경
                 findMember.setReady(false);
-                memberRepository.save(findMember);
-                partyRepository.save(findParty);
-                return 0;
+                findParty.updateStatus(MatchingStatus.NON_MATCHED);
+                log.info("매치가 취소되었습니다.");
+                return true;
             }
+
+            // NON_MATCHED 상태에서 방장이 start 누르는 경우
+            if (!findParty.readyStatus(members))
+                return false;
+
             findMember.setReady(true);
-            for (Member eachMember : members){  // 모든 파티원의 ready 상태 확인
-                log.info("참가 멤버들: {}", eachMember.getNickname());
-                log.info("참가 멤버들의 ready 상태: {}", eachMember.getIsReady());
-                if (!eachMember.getIsReady()){  // ready 안한 파티원이 있는 경우
-                    findMember.setReady(false);
-                    return 1;
-                }
-            }
             findParty.updateStatus(MatchingStatus.MATCHED); // 매칭 완료
-            memberRepository.save(findMember);
-            partyRepository.save(findParty);
-            return 0;
-        } else if ((findMember.getParty().getId() == findParty.getId() && !findMember.getOwner())){  // 사용자가 파티원인지 확인 (파티원이면 ready 버튼)
-            findMember.setReady(true);
-            memberRepository.save(findMember);
-            return 0;
-        } else {    // 이외의 경우 실패
-            return 2;
-        }
+            log.info("매치가 시작되었습니다.");
+            return true;
+
+        // 사용자가 파티원인지 확인 (파티원이면 ready 버튼)
+        } else if (!findMember.getOwner()){
+            if (findParty.getStatus().equals(MatchingStatus.MATCHED)) // MATCHED 상태에선 준비 변경 불가
+                return false;
+
+            // ready 상태일 때 ready 취소
+            if (findMember.getIsReady())
+                findMember.setReady(false);
+            else // ready 상태일 때 ready 취소
+                findMember.setReady(true);
+             return true;
+        } else    // 이외의 경우 실패
+            return false;
     }
 
 

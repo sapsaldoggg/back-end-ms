@@ -91,4 +91,20 @@ public class Party {
     }
 
 
+    // 파티원의 준비 상태 확인 메서드
+    public boolean readyStatus(List<Member> members){
+        for (Member member : members){
+            if (member.getOwner())  // 방장은 준비 상태 확인에서 제외
+                continue;
+            log.info("참가 멤버들: {}", member.getNickname());
+            log.info("참가 멤버들의 ready 상태: {}", member.getIsReady());
+            if (member.getIsReady() == false){
+                return false;
+            }
+        }
+        return true;
+    }
+
+
+
 }

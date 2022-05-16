@@ -191,13 +191,11 @@ public class PartyController {
             Member member = principalDetails.getMember();
             log.info("현재 로그인 한 사용자: {}", member.getNickname());
 
-            int ready = partyService.readyParty(member, partyId);
+            Boolean ready = partyService.readyParty(member, partyId);
 
-            if (ready == 0) {    // 준비 or 시작이 잘 눌림
+            if (ready) {    // 준비 or 시작이 잘 눌림
                 return new ResponseEntity<>(true, HttpStatus.OK);
-            } else if (ready == 1){ // 모든 파티원이 ready 상태가 아닌데 방장이 start 한 경우
-                return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
-            } else {    // 준비 or 시작에 문제 발생
+            } else { // 준비 or 시작에 문제 발생
                 return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
             }
 
