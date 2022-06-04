@@ -11,9 +11,9 @@ public class PartyOwnerDto {
 
     private Long partyId;
 
-    private List<ResponsePartyDto> responsePartyDtoList;
+    private List<ResponsePartyDto> parties;
 
     public PartyOwnerDto(List<ResponsePartyDto> responsePartyDtoList){
-        this.responsePartyDtoList = responsePartyDtoList;
+        this.parties = responsePartyDtoList;
     }
 }

@@ -2,12 +2,10 @@ package com.capstone.bobmate.controller;
 
 import com.capstone.bobmate.config.auth.PrincipalDetails;
 import com.capstone.bobmate.domain.Member;
-import com.capstone.bobmate.domain.Party;
 import com.capstone.bobmate.domain.Restaurant;
 import com.capstone.bobmate.dto.partyDto.PartyInfoDto;
 import com.capstone.bobmate.dto.partyDto.RequestPartyDto;
 import com.capstone.bobmate.dto.partyDto.PartyOwnerDto;
-import com.capstone.bobmate.dto.partyDto.ResponsePartyMembersDto;
 import com.capstone.bobmate.repository.PartyRepository;
 import com.capstone.bobmate.repository.RestaurantRepository;
 import com.capstone.bobmate.service.PartyService;
@@ -19,12 +17,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 
 @Slf4j
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/user/restaurant")
+@RequestMapping("/user/restaurant/{restaurant_id}")
 public class PartyController {
 
     @Autowired
@@ -37,7 +34,7 @@ public class PartyController {
     private final RestaurantRepository restaurantRepository;
 
     // 파티 생성
-    @PostMapping("/{restaurant_id}/party")
+    @PostMapping("/party")
     public ResponseEntity<?> createParty(
             @PathVariable(name = "restaurant_id") Long restaurantId,
             @AuthenticationPrincipal PrincipalDetails principalDetails,
@@ -62,7 +59,7 @@ public class PartyController {
 
 
     // 식당 선택 시 파티 목록 조회
-    @GetMapping("/{restaurant_id}/parties")
+    @GetMapping("/parties")
     public ResponseEntity<?> showParties(
             @PathVariable(name = "restaurant_id") Long restaurantId,
             @AuthenticationPrincipal PrincipalDetails principalDetails){
@@ -84,7 +81,7 @@ public class PartyController {
 
 
     // 파티 참가
-    @PostMapping("/party/{party_id}")
+    @PostMapping("/party/{party_id}/join")
     public ResponseEntity<?> memberJoinParty(
             @PathVariable(name = "party_id") Long partyId,
             @AuthenticationPrincipal PrincipalDetails principalDetails){
@@ -96,7 +93,7 @@ public class PartyController {
             PartyInfoDto partyInfoDto = partyService.joinParty(member, partyId);
 //            List<ResponsePartyMembersDto> responsePartyMembersDtos = partyService.joinParty(member, partyId);
 
-            if (partyInfoDto.getResponsePartyMembersDtoList() == null){  // 파티 참가에 문제가 발생
+            if (partyInfoDto.getMembers() == null){  // 파티 참가에 문제가 발생
                 return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
             }
 
@@ -133,7 +130,7 @@ public class PartyController {
 
 
     // 파티 탈퇴
-    @PostMapping("/party/{party_id}/out")
+    @PostMapping("/party/{party_id}/exit")
     public ResponseEntity<?> partyOut(
             @PathVariable(name = "party_id") Long partyId,
             @AuthenticationPrincipal PrincipalDetails principalDetails) {
@@ -206,5 +203,28 @@ public class PartyController {
 
     }
 
+
+    @GetMapping("/party/{party_id}")
+    public ResponseEntity<?> enter(
+            @PathVariable(name = "party_id") Long partyId,
+            @AuthenticationPrincipal PrincipalDetails principalDetails){
+
+        try{
+            Member member = principalDetails.getMember();
+            log.info("현재 로그인 한 사용자: {}", member.getNickname());
+
+            PartyInfoDto partyInfoDto = partyService.joinParty(member, partyId);
+
+            if (partyInfoDto.getMembers() == null){  // 파티 참가에 문제가 발생
+                return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
+            }
+
+            return new ResponseEntity<>(partyInfoDto, HttpStatus.OK);
+
+        } catch (Exception e){
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+
+    }
 
 }

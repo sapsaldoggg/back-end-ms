@@ -1,5 +1,7 @@
 package com.capstone.bobmate.controller;
 
+import com.capstone.bobmate.config.auth.PrincipalDetails;
+import com.capstone.bobmate.domain.Member;
 import com.capstone.bobmate.dto.memberDto.JoinMemberDto;
 import com.capstone.bobmate.repository.MemberRepository;
 import com.capstone.bobmate.service.MemberService;
@@ -8,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -23,6 +26,7 @@ public class HomeController {
 
     @Autowired
     private final MemberRepository memberRepository;
+
 
     // 회원 가입
     @PostMapping("/join")
@@ -63,6 +67,14 @@ public class HomeController {
             return new ResponseEntity<>(true, HttpStatus.BAD_REQUEST);
         } else
             return new ResponseEntity<>(false, HttpStatus.OK);
+    }
+
+    @GetMapping("/user")
+    public void detail(@AuthenticationPrincipal PrincipalDetails principalDetails){
+        Member member = principalDetails.getMember();
+        log.info("member: {}", member.getNickname());
+        Member findMember = memberRepository.findById(member.getId()).orElseGet(null);
+        log.info("nfindMember: {}", findMember.getNickname());
     }
 
 

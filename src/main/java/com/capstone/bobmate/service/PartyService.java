@@ -120,7 +120,7 @@ public class PartyService {
         Restaurant findRestaurant = findParty.getRestaurant();
         log.info("파티로 찾은 식당", findRestaurant);
 
-        return new PartyInfoDto(findParty.getTitle(), findParty.getCurrentCount(), findParty.getMaximumCount(), findParty.getStatus(), findRestaurant.getName(), responsePartyMembersDtos);
+        return new PartyInfoDto(findParty.getId(), findParty.getTitle(), findParty.getCurrentCount(), findParty.getMaximumCount(), findParty.getStatus(), findRestaurant.getName(), findParty.getCreatedAt(), responsePartyMembersDtos);
     }
 
 
@@ -176,6 +176,12 @@ public class PartyService {
 
             return true;
         } else if (!findMember.getOwner()) {    // 사용자가 파티원일 때
+//            1) 매칭이 시작되면 탈퇴 불가
+//            2) 매칭이 끝나면 탈퇴 가능
+//            만약 방장이 까먹으면?
+//                    =>
+//            매칭이 시작된 시간을 DB에 저장
+//            DB에 저장된 시간에서 5분이 지났을때부터 파티 탈퇴가 가능
             findParty.minusMember(findMember);
             return true;
         }
@@ -254,10 +260,14 @@ public class PartyService {
                 return false;
 
             // ready 상태일 때 ready 취소
-            if (findMember.getIsReady())
+            if (findMember.getIsReady()) {
                 findMember.setReady(false);
-            else // ready 상태일 때 ready 취소
+                log.info("준비가 취소되었습니다.");
+            }
+            else { // ready 상태일 때 ready 취소
                 findMember.setReady(true);
+                log.info("준비 되었습니다.");
+            }
              return true;
         } else    // 이외의 경우 실패
             return false;
